@@ -1,0 +1,278 @@
+---
+title: "Plateseq DaSEH project"
+output: html_document
+date: "2024-07-29"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r cars}
+summary(cars)
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+
+Now I will load packages that I may need in my analysis:
+
+```{r}
+library(tidyverse)
+```
+
+## Data Import
+
+
+I will then import my data by using File>Import Dataset>From text (readr)>Browse>Delimiter=Tab
+
+or could use the code below
+
+```{r}
+getwd()
+Plateseq_2 <- read_delim(file = "Kelly_yes_jan_2024_CPM_data_protein_coding_genes.txt", delim = "\t")
+
+Plateseq_2 <- Kelly_yes_jan_2024_CPM_data_protein_coding_genes
+```
+
+I then take a look at my data using the `head()` function. I use the `dim()` function to see how many rows/columns there are.
+
+```{r}
+head(Plateseq_2)
+dim(Plateseq_2)
+```
+We are working in a git project called "plateseq" in the kmitche2 folder. Go to "Git" in the upper right corner and click "Commit" to document what you have done in the project at each step. For uploading to Git, click the Push button, write a note about what you updated, and you may need to input your passkey.
+
+To determine how many unique genes there are I used the `unique()` function and the `length()` function.
+
+```{r}
+pull(Plateseq_2, "Gene") %>%
+  unique() %>%
+  length()
+```
+
+Rename the columns using `rename()` function to do this, listing the new name first.
+
+```{r}
+colnames(Plateseq_2)
+
+Plateseq_2 <- Plateseq_2 %>%
+  rename("SOC_7D_p27neg_10R" = "KM_827_p27mvenus_PDX_mouse_10R_SOC_7D_post_p27neg_sorted.yes.txt", "SOC_7D_p27pos_10R" = "KM_827_p27mvenus_PDX_mouse_10R_SOC_7D_post_p27pos_sorted.yes.txt")
+colnames(Plateseq_2)
+
+Plateseq_2 <- Plateseq_2 %>%
+  rename("VEH_14D_p27neg_11L" = "KM_827_p27mvenus_PDX_mouse_11L_VEH_14D_post_p27neg_sorted.yes.txt",
+         "VEH_14D_p27pos_11L" = "KM_827_p27mvenus_PDX_mouse_11L_VEH_14D_post_p27pos_sorted.yes.txt", 
+        "VEH_14D_p27neg_12RL" = "KM_827_p27mvenus_PDX_mouse_12RL_VEH_14D_post_p27neg_sorted.yes.txt", 
+        "VEH_14D_p27pos_12RL" = "KM_827_p27mvenus_PDX_mouse_12RL_VEH_14D_post_p27pos_sorted.yes.txt", 
+        "SOC_7D_2L" = "KM_827_p27mvenus_PDX_mouse_2L_SOC_7D_post.yes.txt", 
+        "SOC_14D_p27neg_5L" = "KM_827_p27mvenus_PDX_mouse_5L_SOC_14D_post_p27neg_sorted.yes.txt",
+        "SOC_14D_p27pos_5L" = "KM_827_p27mvenus_PDX_mouse_5L_SOC_14D_post_p27pos_sorted.yes.txt", 
+        "SOC_14D_p27neg_6RL" = "KM_827_p27mvenus_PDX_mouse_6RL_SOC_14D_post_p27neg_sorted.yes.txt", 
+        "SOC_14D_p27pos_6RL" = "KM_827_p27mvenus_PDX_mouse_6RL_SOC_14D_post_p27pos_sorted.yes.txt", 
+        "VEH_7D_p27neg_7RR" = "KM_827_p27mvenus_PDX_mouse_7RR_VEH_7D_post_p27neg_sorted.yes.txt", 
+        "VEH_7D_p27pos_7RR" = "KM_827_p27mvenus_PDX_mouse_7RR_VEH_7D_post_p27pos_sorted.yes.txt", 
+        "VEH_7D_p27neg_8LL" = "KM_827_p27mvenus_PDX_mouse_8LL_VEH_7D_post_p27neg_sorted.yes.txt",
+        "VEH_7D_p27pos_8LL" = "KM_827_p27mvenus_PDX_mouse_8LL_VEH_7D_post_p27pos_sorted.yes.txt")
+colnames(Plateseq_2)
+```
+
+Arrange the data by `arrange()` function with the largest score shown first, thus I needed to use `desc()`.
+
+```{r}
+Plateseq_2 <- Plateseq_2 %>% arrange(desc(SOC_7D_p27pos_10R))
+head(Plateseq_2)
+```
+I wondered how a certain gene ranked, so I decided to make a variable for rank. To do so I used the `seq()` function to create a sequence of numbers from 1 to 19980, the number of genes in the data.
+
+```{r}
+Plateseq_2 <- Plateseq_2 %>% mutate(rank = seq(1:19980))
+Plateseq_2$rank
+
+any(is.na(Plateseq_2))
+
+glimpse(Plateseq_2)
+summary(Plateseq_2)
+str(Plateseq_2) #tells you the class of each column
+
+#install.packages("naniar")
+library(naniar)
+
+pct_complete(Plateseq_2)
+
+```
+
+
+Look at a specific gene using `filter()`. Then use the `pull()` function to get the rank for that gene in the sample I ranked the dataset by
+
+```{r}
+Plateseq_2 %>%
+  filter(Gene == "CDK4") %>%
+  pull(rank)
+```
+
+## Data Visualization
+
+I decided to make a plot of the top 20 countries using `geom_point()` and `ggplot()`.
+First I created a new dataset of just the top 20 expressed genes in the SOC_7D_p27pos_10R sample using the `filter()` function 
+
+```{r}
+top20 <- Plateseq_2 %>% filter(rank > 10, rank < 30)
+
+ggplot(
+  data = top20,
+  aes(
+    x = Gene,
+    y = SOC_7D_p27pos_10R
+  )
+) +
+  geom_point()
+```
+To reorder by gene expression, I made `Gene` a factor and then reordered it by the `SOC_7D_p27pos_10R` variable. 
+
+```{r}
+top20 <- top20 %>%
+  mutate(
+    Gene = as_factor(Gene),
+    Gene = fct_reorder(Gene, SOC_7D_p27pos_10R)
+  )
+
+ggplot(
+  data = top20,
+  aes(
+    x = Gene,
+    y = SOC_7D_p27pos_10R
+  )
+) +
+  geom_point()
+```
+
+```{r}
+
+
+Plateseq_2 <- Plateseq_2 %>%
+  mutate(
+    Gene = as_factor(Gene),
+    Gene = fct_reorder(Gene, SOC_7D_p27pos_10R)
+  )
+```
+
+Now I check out these other genes that I was interested in by filtering for them from the  `Plateseq_2` data set and creating another plot.
+
+```{r}
+GOI_1 <- Plateseq_2 %>% filter(Gene %in% c("CDK4", "MDM2", "CPM", "CDK6"))
+
+ggplot(
+  data = GOI_1,
+  aes(
+    x = Gene,
+    y = SOC_7D_p27pos_10R
+  ),
+  group = Gene
+) +
+  geom_point()
+```
+
+```{r}
+
+library(dplyr)
+
+Plateseq_2_transformed<-t(Plateseq_2)
+
+# Plateseq_2 %>% select(contains("SOC")) #contains works for column names
+
+class(Plateseq_2_transformed)
+
+Plateseq_2_transformed <- as.data.frame(Plateseq_2_transformed)
+
+class(Plateseq_2_transformed)
+
+# Convert row names to a column
+Plateseq_2_transformed <- Plateseq_2_transformed %>% 
+  rownames_to_column(var = "row_name")
+
+# Create the 'Treatment' column based on the row names
+Plateseq_2_transformed <- Plateseq_2_transformed %>%
+  mutate(Treatment = case_when(
+    grepl("SOC_7D", row_name) ~ "SOC_7D",
+    grepl("SOC_14D", row_name) ~ "SOC_14D",
+    grepl("VEH_7D", row_name) ~ "VEH_7D",
+    grepl("VEH_14D", row_name) ~ "VEH_14D",
+    TRUE ~ NA_character_
+  ))
+
+Plateseq_2_transformed <- Plateseq_2_transformed %>%
+  mutate(Treatment_p27 = case_when(
+    grepl("SOC_7D_p27neg", row_name) ~ "SOC_7D_p27neg",
+    grepl("SOC_7D_p27pos", row_name) ~ "SOC_7D_p27pos",
+    grepl("SOC_14D_p27neg", row_name) ~ "SOC_14D_p27neg",
+    grepl("SOC_14D_p27pos", row_name) ~ "SOC_14D_p27pos",
+    grepl("VEH_7D_p27neg", row_name) ~ "VEH_7D_p27neg",
+    grepl("VEH_7D_p27pos", row_name) ~ "VEH_7D_p27pos",
+    grepl("VEH_14D_p27neg", row_name) ~ "VEH_14D_p27neg",
+    grepl("VEH_14D_p27pos", row_name) ~ "VEH_14D_p27pos",
+    TRUE ~ NA_character_
+  ))
+
+#make the first row the column names
+colnames(Plateseq_2_transformed) <- Plateseq_2_transformed[1,]
+Plateseq_2_transformed<- Plateseq_2_transformed[-1, ]
+
+
+#rename the column names that were lost
+colnames(Plateseq_2_transformed)[19982] <- 'Treatment'
+colnames(Plateseq_2_transformed)[19983] <- 'Treatment_p27'
+
+a<-Plateseq_2_transformed %>% pull(Gene)
+a
+b<-Plateseq_2_transformed %>% pull(Treatment)
+b
+c<-Plateseq_2_transformed %>% pull(Treatment_p27)
+c
+d<-tibble(a, b, c)
+d
+
+```
+
+First, make sure you install and load the `esquisse` package using `install.packages` and `library`:
+
+```{r, eval = FALSE}
+install.packages("esquisse")
+install.packages("ggplot2")
+```
+
+```{r, comment = FALSE}
+library(esquisse)
+library(ggplot2)
+library(dplyr)
+```
+
+```{r}
+Plateseq_2_transformed_num<-Plateseq_2_transformed %>% mutate(across(
+  !c(Gene, Treatment, Treatment_p27), 
+  as.numeric
+))
+
+glimpse(Plateseq_2_transformed_num)
+
+Plateseq_2_transformed_GOIs <- select(Plateseq_2_transformed_num, c("Gene", "EGFR", "CDK4", "SLC35E3", "UQCRQ", "UBB", "CD151", "VGF", "OS9", "CPM", "MDM2", "NUP107", "APLP1", "Treatment", "Treatment_p27"))
+
+colnames(Plateseq_2_transformed_GOIs)
+
+esquisser(Plateseq_2_transformed_GOIs, viewer = "browser")
+
+
+```
